@@ -33,13 +33,12 @@ id : '[_A-Za-z][A-Za-z0-9_]*'
 comments start with `#` symbol and end the end of the line.
 
 A simple class example:
-=====================
+=======================
 
-```uml
+```
 @startuml
 skinparam classAttributeIconSize 0
 skinparam monochrome true
-
 class Tire {
 - _pressure: int
 - _standard: int
