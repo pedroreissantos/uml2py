@@ -9,6 +9,9 @@ decls : ε | decls decl
 decl : class | assoc | "skinparam"
 class : abs "class" id '{' attribs '}'
 class : abs "interface" id '{' attribs '}'
+class : enum id '{' ids '}'
+ids : ID
+ids : ids ',' ID
 abs : ε | "abstract"
 attribs : ε | attribs attrib
 attrib : prot id vec type init
@@ -75,4 +78,4 @@ DEBUG=1 python3 -m uml2py tire.uml
 
 Some examples in the `examples/` directory.
 
-(C) prs, IST 2022
+(C) prs, IST 2024

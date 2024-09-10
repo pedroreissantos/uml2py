@@ -1,9 +1,9 @@
 #! /usr/bin/env python3
 '''
-PlantUML ass diagram to python3 converter
+PlantUML cass diagram to python3 converter
 
 Author: Pedro Reis dos Santos
-Date: June 25, 2022
+Date: September 25, 2024
 '''
 __all__ = [ 'scan', 'grammar', 'uml2py' ]
 from os import getenv
@@ -12,7 +12,7 @@ from graphlib import CycleError
 from ply import lex, yacc
 
 # -------------- LEX ----------------
-reserved = { 'class': 'CLASS', 'interface': 'INTERFACE', 'skinparam': 'SKINPARAM',
+reserved = { 'class': 'CLASS', 'interface': 'INTERFACE', 'enum': 'ENUM', 'skinparam': 'SKINPARAM',
     '__': 'SEP4', 'abstract': 'ABSTRACT', 'static': 'STATIC', }
 tokens = ( 'ID', 'INT', 'STR', 'SEP', 'SEP2', 'SEP3', 'START', 'END', 'DEPEND',
     'DEPEND2', 'INHERIT', 'INHERIT2', 'COMPOSE', 'COMPOSE2', 'AGGREG', 'AGGREG2',
@@ -111,6 +111,22 @@ def p_class_1(node):
         GRAPH[node[3]] = set()
     global CLASSES
     CLASSES |= { node[3] }
+
+def p_class_2(node):
+    '''class : ENUM ID '{' ids '}' '''
+    node[0] = ('ENUM', node[2], node[4])
+    if node[2] not in GRAPH:
+        GRAPH[node[2]] = set()
+    global CLASSES
+    CLASSES |= { node[2] }
+
+def p_ids_0(node):
+    '''ids : ID '''
+    node[0] = node[1],
+
+def p_ids_1(node):
+    '''ids : ids ',' ID '''
+    node[0] = node[1] + (node[3],)
 
 def p_abs_0(node):
     '''abs : '''
@@ -437,6 +453,7 @@ def uml2py(gram):
     if DBG:
         print('# classes =', CLASSES)
     abc = False # use abstract classes
+    enums = False # use numrated types
     for ident in CLASSES:
         if not _defined(ident):
             print(ident, '= None # type forward declaration (use Self in python3.11+)')
@@ -448,10 +465,11 @@ def uml2py(gram):
             print('## topo =',topo)
         for ident in topo:
             CLASSES.remove(ident)
+            enum = False
             nocls = True
             data = None
             for data in gram:
-                if data[0] in ('CLASS', 'INTERFACE') and data[1] == ident:
+                if data[0] in ('CLASS', 'INTERFACE', 'ENUM') and data[1] == ident:
                     nocls = False
                     break
             inherit = ''
@@ -460,6 +478,12 @@ def uml2py(gram):
                     abc = True
                     print("from abc import ABC as abstract")
                 inherit = '(abstract'
+            if data and data[0] == 'ENUM':
+                if not enums:
+                    enums = True
+                    print("from enum import Enum")
+                inherit = '(Enum'
+                enum = True
             for cls in GRAPH[ident]:
                 if inherit:
                     inherit += ', ' + cls
@@ -467,8 +491,13 @@ def uml2py(gram):
                     inherit = '(' + cls
             if inherit:
                 inherit += ')'
-            print("class", ident, inherit, ':')
-            if nocls:
+            print("class " + ident + inherit + ':')
+            if enum:
+                cnt = 1
+                for memb in data[2]:
+                    print('    ' + memb + ' = ' + str(cnt))
+                    cnt += 1
+            elif nocls:
                 _ctor(ident, (), gram)
             else:
                 _ctor(ident, data[2], gram)

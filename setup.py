@@ -9,7 +9,7 @@ with open("README.md", "r") as fh:
 	readme = fh.read()
 
 setuptools.setup(name='uml2py', # 'uml2py-pkg-peresan',
-	version='1.0.0',
+	version='1.0.1',
 	author='Pedro Reis dos Santos',
 	author_email="reis.santos@tecnico.ulisboa.pt",
 	description="A converter from PlantUML class diagrams to python3 skeleton classes.",
